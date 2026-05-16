@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head><title>Dashboard</title></head>
+<body>
+    <h1>Portfolio Dashboard</h1>
+
+    <p>Total Invested: ${{ total_invested }}</p>
+    <p>Current Value: ${{ total_value }}</p>
+    <p>P&L: ${{ total_pnl }} ({{ total_return }}%)</p>
+
+    <h2>Allocation</h2>
+    <img src="/static/plots/pie.png">
+
+    <h2>Returns by Stock</h2>
+    <img src="/static/plots/bar.png">
+
+    <h2>7-Day Forecast — {{ pred_ticker }}</h2>
+    <img src="/static/plots/pred_{{ pred_ticker }}.png">
+
+    <h2>Holdings Detail</h2>
+    <table border="1">
+        <tr><th>Ticker</th><th>Invested</th><th>Value</th><th>P&L</th><th>Return %</th></tr>
+        {% for row in table %}
+        <tr>
+            <td>{{ row.Ticker }}</td>
+            <td>{{ row.Invested }}</td>
+            <td>{{ row['Current Value'] }}</td>
+            <td>{{ row['P&L'] }}</td>
+            <td>{{ row['Return %'] }}%</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <a href="/">← Back</a>
+</body>
+</html>
