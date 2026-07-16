@@ -36,7 +36,7 @@ def dashboard():
     make_pie_chart(df)
     make_bar_chart(df)
 
-    # prediction for first stock only (keep it simple)
+    # prediction for first stock only 
     first_ticker = df["Ticker"].iloc[0]
     pred_data = predict_next_7(first_ticker)
     make_prediction_chart(first_ticker, pred_data)
