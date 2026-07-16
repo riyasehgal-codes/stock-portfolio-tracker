@@ -1,15 +1,15 @@
 portfolio-tracker/
-├── app.py              ( Flask routes (main file) )
-├── database.py         (SQLite logic)
-├── fetcher.py          (yfinance price fetching)
-├── portfolio.py        (pandas P&L calculations)
-├── predictor.py        (sklearn ML model)
-├── charts.py           (matplotlib/seaborn charts)
-├── requirements.txt    (libraries list)
-├── Procfile            (for Render deployment)
-├── portfolio.db        (SQLite database (auto created))
-├── templates/
-│   ├── index.html      (home page)
-│   └── dashboard.html  (dashboard page)
-└── static/
-    └── plots/          (saved chart images)
+ ─ app.py              ( Flask routes (main file) )    
+-─ database.py         (SQLite logic)
+─ fetcher.py          (yfinance price fetching)
+─ portfolio.py        (pandas P&L calculations)
+── predictor.py        (sklearn ML model)
+── charts.py           (matplotlib/seaborn charts)
+── requirements.txt    (libraries list)
+── Procfile            (for Render deployment)
+── portfolio.db        (SQLite database (auto created))
+── templates/
+   ── index.html      (home page)
+   ── dashboard.html  (dashboard page)
+── static/
+    ── plots/          (saved chart images)
