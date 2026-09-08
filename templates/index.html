@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurelia · Portfolio Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <header class="nav">
+        <a class="brand" href="/">
+            <span class="logo">A</span>
+            <span>
+                <strong>Aurelia</strong>
+                <small>Stock Portfolio Tracker</small>
+            </span>
+        </a>
+        <nav>
+            <a class="nav-link active" href="/">Holdings</a>
+            <a class="nav-link" href="/dashboard">Dashboard</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <p class="eyebrow">Track · Analyze · Forecast</p>
+            <h1>See every position clearly.</h1>
+            <p class="lede">Add the stocks you own, then jump to a live dashboard with P&amp;L, allocation, and a 7-day trend forecast.</p>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Add a holding</h2>
+                <p>Use Yahoo Finance tickers like AAPL, MSFT, RELIANCE.NS, or BTC-USD.</p>
+            </div>
+            <form class="add-form" action="{{ url_for('add') }}" method="POST">
+                <label>
+                    Ticker
+                    <input name="ticker" placeholder="AAPL" required>
+                </label>
+                <label>
+                    Quantity
+                    <input name="qty" type="number" min="0.0001" step="any" placeholder="10" required>
+                </label>
+                <label>
+                    Buy price
+                    <input name="buy_price" type="number" min="0.01" step="0.01" placeholder="150.00" required>
+                </label>
+                <label>
+                    Buy date
+                    <input name="buy_date" type="date" required>
+                </label>
+                <button type="submit">Add stock</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head row">
+                <div>
+                    <h2>Your holdings</h2>
+                    <p>{{ holdings|length }} position{{ 's' if holdings|length != 1 else '' }} saved locally.</p>
+                </div>
+                {% if holdings %}
+                    <a class="btn primary" href="{{ url_for('dashboard') }}">Open dashboard</a>
+                {% endif %}
+            </div>
+
+            {% if holdings %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Qty</th>
+                            <th>Buy price</th>
+                            <th>Date</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in holdings %}
+                        <tr>
+                            <td><span class="chip">{{ h.ticker }}</span></td>
+                            <td>{{ h.qty }}</td>
+                            <td>${{ '%.2f'|format(h.buy_price) }}</td>
+                            <td>{{ h.buy_date }}</td>
+                            <td>
+                                <form action="{{ url_for('delete', holding_id=h.id) }}" method="POST">
+                                    <button class="btn danger ghost" type="submit">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty">
+                <p>No holdings yet. Add your first stock to unlock charts and forecasts.</p>
+            </div>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

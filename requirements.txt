@@ -1,8 +1,6 @@
-flask
-yfinance
-pandas
-numpy
-matplotlib
-seaborn
-scikit-learn
-gunicorn
+flask>=3.0.0
+yfinance>=0.2.40
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.4.0
+gunicorn>=22.0.0

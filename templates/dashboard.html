@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard · Aurelia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <header class="nav">
+        <a class="brand" href="/">
+            <span class="logo">A</span>
+            <span>
+                <strong>Aurelia</strong>
+                <small>Stock Portfolio Tracker</small>
+            </span>
+        </a>
+        <nav>
+            <a class="nav-link" href="/">Holdings</a>
+            <a class="nav-link active" href="/dashboard">Dashboard</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero compact">
+            <p class="eyebrow">Live snapshot</p>
+            <h1>Portfolio dashboard</h1>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="kpis">
+            <article class="kpi">
+                <span>Invested</span>
+                <strong>${{ '%.2f'|format(total_invested) }}</strong>
+            </article>
+            <article class="kpi">
+                <span>Current value</span>
+                <strong>${{ '%.2f'|format(total_value) }}</strong>
+            </article>
+            <article class="kpi {% if total_pnl >= 0 %}up{% else %}down{% endif %}">
+                <span>P&amp;L</span>
+                <strong>${{ '%.2f'|format(total_pnl) }}</strong>
+                <small>{{ '%.2f'|format(total_return) }}%</small>
+            </article>
+        </section>
+
+        <section class="grid-2">
+            <article class="panel">
+                <div class="panel-head">
+                    <h2>Allocation</h2>
+                    <p>Share of current value by ticker.</p>
+                </div>
+                <div class="chart-box">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </article>
+            <article class="panel">
+                <div class="panel-head">
+                    <h2>Returns by stock</h2>
+                    <p>Percent return versus your buy price.</p>
+                </div>
+                <div class="chart-box">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head row">
+                <div>
+                    <h2>7-day forecast — {{ pred_ticker }}</h2>
+                    <p>Simple linear trend on the last ~60 trading days. Not financial advice.</p>
+                </div>
+                <form class="inline" method="GET" action="{{ url_for('dashboard') }}">
+                    <label>
+                        Ticker
+                        <select name="ticker" onchange="this.form.submit()">
+                            {% for t in tickers %}
+                                <option value="{{ t }}" {% if t == pred_ticker %}selected{% endif %}>{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </form>
+            </div>
+            {% if pred_error %}
+                <div class="flash error">{{ pred_error }}</div>
+            {% elif pred_data %}
+                <p class="forecast-note">
+                    Model trend over the next week:
+                    <strong class="{% if pred_data.change_pct >= 0 %}up{% else %}down{% endif %}">
+                        {{ '%.2f'|format(pred_data.change_pct) }}%
+                    </strong>
+                </p>
+                <div class="chart-box wide">
+                    <canvas id="predChart"></canvas>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Holdings detail</h2>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Qty</th>
+                            <th>Buy</th>
+                            <th>Live</th>
+                            <th>Invested</th>
+                            <th>Value</th>
+                            <th>P&amp;L</th>
+                            <th>Return</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in table %}
+                        <tr>
+                            <td><span class="chip">{{ row.Ticker }}</span></td>
+                            <td>{{ row.Qty }}</td>
+                            <td>${{ '%.2f'|format(row['Buy Price']) }}</td>
+                            <td>{% if row['Current Price'] is not none %}${{ '%.2f'|format(row['Current Price']) }}{% else %}—{% endif %}</td>
+                            <td>${{ '%.2f'|format(row.Invested) }}</td>
+                            <td>${{ '%.2f'|format(row['Current Value']) }}</td>
+                            <td class="{% if row['P&L'] >= 0 %}up{% else %}down{% endif %}">${{ '%.2f'|format(row['P&L']) }}</td>
+                            <td class="{% if row['Return %'] >= 0 %}up{% else %}down{% endif %}">{{ '%.2f'|format(row['Return %']) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const pieLabels = {{ pie_labels | tojson }};
+        const pieValues = {{ pie_values | tojson }};
+        const barLabels = {{ bar_labels | tojson }};
+        const barValues = {{ bar_values | tojson }};
+        const predData = {{ pred_data | tojson }};
+
+        const colors = ["#7dd3c7", "#f4c38a", "#8fb4ff", "#f0a3b5", "#c4b5fd", "#fde68a", "#86efac"];
+
+        Chart.defaults.color = "#c8d0dc";
+        Chart.defaults.borderColor = "rgba(255,255,255,0.08)";
+        Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+        new Chart(document.getElementById("pieChart"), {
+            type: "doughnut",
+            data: {
+                labels: pieLabels,
+                datasets: [{ data: pieValues, backgroundColor: colors, borderWidth: 0 }]
+            },
+            options: {
+                plugins: { legend: { position: "bottom" } },
+                cutout: "62%"
+            }
+        });
+
+        new Chart(document.getElementById("barChart"), {
+            type: "bar",
+            data: {
+                labels: barLabels,
+                datasets: [{
+                    data: barValues,
+                    backgroundColor: barValues.map(v => v >= 0 ? "rgba(52, 211, 153, 0.85)" : "rgba(251, 113, 133, 0.85)"),
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: "rgba(255,255,255,0.06)" } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        if (predData) {
+            const hist = predData.historical;
+            const pred = predData.predicted;
+            const labels = [...hist.map((_, i) => i + 1), ...pred.map((_, i) => hist.length + i + 1)];
+            const histSeries = [...hist, ...pred.map(() => null)];
+            const predSeries = [...hist.map(() => null).slice(0, -1), hist[hist.length - 1], ...pred];
+
+            new Chart(document.getElementById("predChart"), {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: "Historical",
+                            data: histSeries,
+                            borderColor: "#8fb4ff",
+                            backgroundColor: "rgba(143, 180, 255, 0.12)",
+                            fill: true,
+                            tension: 0.25,
+                            pointRadius: 0
+                        },
+                        {
+                            label: "7-day forecast",
+                            data: predSeries,
+                            borderColor: "#f4c38a",
+                            borderDash: [6, 4],
+                            tension: 0.2,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    plugins: { legend: { position: "bottom" } },
+                    scales: {
+                        y: { grid: { color: "rgba(255,255,255,0.06)" } },
+                        x: { title: { display: true, text: "Days" }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
