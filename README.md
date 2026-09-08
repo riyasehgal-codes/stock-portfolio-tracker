@@ -15,10 +15,11 @@ Open [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
 ## Deploy on Render
 
-1. Push this repo to GitHub.
-2. In [Render](https://render.com), create a new **Web Service** from the repo.
-3. Render will pick up `render.yaml` / `Procfile`.
-4. Set `SECRET_KEY` if it is not generated automatically.
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/riyasehgal-codes/stock-portfolio-tracker)
+
+1. Open the button above (or create a **Web Service** from this GitHub repo).
+2. Render will pick up `render.yaml` / `Procfile`.
+3. Set `SECRET_KEY` if it is not generated automatically.
 
 The app binds to `0.0.0.0` and uses the `PORT` environment variable, which Render provides.
 
